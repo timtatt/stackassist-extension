@@ -1,0 +1,63 @@
+.sa-chat {
+    list-style-type: none;
+    margin:0;
+    padding:0;
+
+    .sa-message-wrapper {
+        padding:5px 0px;
+
+        .sa-message {
+            border-radius:4px;
+            color:#F5F5F5;
+            padding:8px 16px;
+            display:inline-block;
+            font-size:14px;
+            max-width:60%;
+
+            .sa-message-sender {
+                font-weight:bold;
+                font-size:12px;
+            }
+
+            .sa-message-timestamp {
+                font-style:italic;
+                font-size:10px;
+                color:#DEDEDE;
+            }
+        }
+
+        &.sa-message-received {
+            text-align:left;
+
+            .sa-message {
+                background-color:#1666BA;
+            }
+        }
+
+        &.sa-message-sent {
+            text-align:right;
+
+            .sa-message {
+                background-color:#358CE7;
+            }
+        }
+    }
+}
+
+#sa-form-send-message {
+    display:flex;
+
+    #sa-field-message {
+        flex:1 1 auto;
+        padding:8px 16px;
+        border-top-left-radius:4px;
+        border-bottom-left-radius:4px;
+    }
+
+    button {
+        padding:8px 16px;
+        flex: 0 0 auto;
+        border-top-right-radius:4px;
+        border-bottom-right-radius:4px;
+    }
+}

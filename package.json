@@ -1,0 +1,54 @@
+{
+  "name": "stackassist",
+  "displayName": "StackAssist",
+  "description": "A tool to help developers find information online",
+  "version": "0.0.1",
+  "publisher": "timtatt",
+  "engines": {
+    "vscode": "^1.58.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished",
+    "onCommand:stackassist.start"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "stackassist.start",
+        "title": "Start StackAssist"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "scss": "node-sass --watch resources/style -o resources/style",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/glob": "^7.1.3",
+    "@types/mocha": "^8.2.2",
+    "@types/node": "14.x",
+    "@types/vscode": "^1.58.0",
+    "@typescript-eslint/eslint-plugin": "^4.26.0",
+    "@typescript-eslint/parser": "^4.26.0",
+    "eslint": "^7.27.0",
+    "glob": "^7.1.7",
+    "mocha": "^8.4.0",
+    "typescript": "^4.3.2",
+    "vscode-test": "^1.5.2"
+  },
+  "dependencies": {
+    "axios": "^0.21.1",
+    "gulp": "^4.0.2",
+    "gulp-sass": "^5.0.0",
+    "node-sass": "^6.0.1"
+  }
+}
