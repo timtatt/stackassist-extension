@@ -8,12 +8,16 @@ sendMessageForm.addEventListener('submit', event => {
     event.preventDefault();
     event.stopPropagation();
 
-    vscode.postMessage({
-        command: 'sendMessage',
-        text: messageField.value,
-    })
+    var value = messageField.value;
 
-    messageField.value = ""
+    if (value.trim() != '') {
+        vscode.postMessage({
+            command: 'sendMessage',
+            text: messageField.value,
+        })
+
+        messageField.value = ""
+    }
 });
 
 resetChatButton.addEventListener('click', event => {
@@ -24,9 +28,8 @@ resetChatButton.addEventListener('click', event => {
 })
 
 document.addEventListener('click', event => {
-    if (sendMessageForm.contains(event.target)) {
-        console.log('contains form element')
-    } else {
+    if (!sendMessageForm.contains(event.target) 
+        && window.getSelection().getRangeAt(0).collapsed == true) {
         messageField.focus();
     }
 })
