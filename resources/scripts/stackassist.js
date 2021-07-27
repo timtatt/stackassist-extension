@@ -3,6 +3,13 @@ const chatList = document.getElementById('sa-list-chat')
 const sendMessageForm = document.getElementById('sa-form-send-message')
 const messageField = document.getElementById('sa-field-message');
 const resetChatButton = document.getElementById('sa-button-reset-chat');
+const wrapper = document.getElementById('sa-wrapper');
+
+document.getElementById('sa-button-check-connection').addEventListener('click', event => {
+    vscode.postMessage({
+        command: 'checkConnectivity'
+    });
+});
 
 sendMessageForm.addEventListener('submit', event => {
     event.preventDefault();
@@ -39,5 +46,15 @@ window.addEventListener('message', event => {
         case 'newMessage':
             chatList.innerHTML += event.data.renderedMessage;
             return;
+        case 'connectivityChanged':
+            if (event.data.connected === true && wrapper.classList.contains('sa-lost-connection')) {
+                wrapper.classList.remove('sa-lost-connection');
+                messageField.disabled = false;
+                sendMessageForm.querySelector('button').disabled = false;
+            } else if (event.data.connected === false && !wrapper.classList.contains('sa-lost-connection')) {
+                wrapper.classList.add('sa-lost-connection');
+                messageField.disabled = true;
+                sendMessageForm.querySelector('button').disabled = true;
+            }
     }
 })

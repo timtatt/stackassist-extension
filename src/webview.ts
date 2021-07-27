@@ -1,38 +1,21 @@
-import { dir } from 'console';
+import { dir, time } from 'console';
 import * as vscode from 'vscode';
 import axios from 'axios';
+import { ChatbotClient, ChatbotRequest, ChatbotResult } from './chatbot-client';
+import { v4 as uuid } from 'uuid';
+import * as moment from 'moment';
 
 export class StackAssistView {
 	private extensionUri: vscode.Uri;
-	private panel?: vscode.WebviewPanel;
-	private messages: Message[] = [
-		new Message("This is a chat message", MessageDirection.RECEIVED),
-		new Message("This is a chat message", MessageDirection.RECEIVED),
-		new Message("This is a chat message", MessageDirection.RECEIVED),
-		new Message("This is a chat message", MessageDirection.RECEIVED),
-		new Message("This is a chat message", MessageDirection.RECEIVED),
-		new Message("This is a chat message", MessageDirection.RECEIVED),
-		new Message("This is a chat message", MessageDirection.RECEIVED),
-		new Message("This is a chat message", MessageDirection.RECEIVED),
-		new Message("This is a chat message", MessageDirection.RECEIVED),
-		new Message("This is a chat message", MessageDirection.RECEIVED),
-		new Message("This is a chat message", MessageDirection.RECEIVED),
-		new Message("This is a chat message", MessageDirection.RECEIVED),
-		new Message("This is a chat message", MessageDirection.RECEIVED),
-		new Message("This is a chat message", MessageDirection.RECEIVED),
-		new Message("This is a chat message", MessageDirection.RECEIVED),
-		new Message("This is a chat message", MessageDirection.RECEIVED),
-		new Message("This is a chat message", MessageDirection.RECEIVED),
-		new Message("This is a chat message", MessageDirection.RECEIVED),
-		new Message("This is a chat message", MessageDirection.RECEIVED),
-		new Message("This is a chat message", MessageDirection.RECEIVED),
-		new Message("This is a chat message", MessageDirection.RECEIVED),
-		new Message("This is a chat message that I sent", MessageDirection.SENT),
-		new Message("This is a chat message", MessageDirection.RECEIVED),
-	];
+	private chatbotClient: ChatbotClient;
+	private panel: vscode.WebviewPanel;
+	private session: ChatSession = new ChatSession();
+	private messages: Message[] = [];
 
-	constructor(extensionUri: vscode.Uri, panel: vscode.WebviewPanel) {
+	constructor(extensionUri: vscode.Uri, panel: vscode.WebviewPanel, chatbotClient: ChatbotClient) {
 		this.extensionUri = extensionUri;
+		this.panel = panel;
+		this.chatbotClient = chatbotClient;
 
 		panel.webview.onDidReceiveMessage(event => {
 			switch (event.command) {
@@ -43,7 +26,7 @@ export class StackAssistView {
 						command: 'newMessage',
 						renderedMessage: message.render()
 					})
-					this.getResponse(message.message, receivedMessage => {
+					this.getChatbotMessage(message.text, receivedMessage => {
 						panel.webview.postMessage({
 							command: 'newMessage',
 							renderedMessage: receivedMessage.render()
@@ -53,36 +36,63 @@ export class StackAssistView {
 				case 'resetChat':
 					this.resetChat();
 					return;
+				case 'checkConnectivity':
+					this.checkConnectivity();
+					return;
 			}
 		})
 
 		panel.webview.html = this.render(panel.webview);
+
+		this.checkConnectivity();
+		setInterval(() => this.checkConnectivity(), 5000);
 	}
 
-	static createPanel(context: vscode.ExtensionContext) {
-		const panel = vscode.window.createWebviewPanel('stackassist', 'Stack Assist', vscode.ViewColumn.Two, {
+	static createPanel(context: vscode.ExtensionContext, chatbotClient: ChatbotClient) {
+		const panel = vscode.window.createWebviewPanel('stackassist', 'StackAssist', vscode.ViewColumn.Two, {
 			enableScripts: true,
 		});
 
-		return new StackAssistView(context.extensionUri, panel);
+		return new StackAssistView(context.extensionUri, panel, chatbotClient);
+	}
+
+	private checkConnectivity() {
+		this.chatbotClient.checkConnectivity(connected => 
+			this.panel.webview.postMessage({
+				command: 'connectivityChanged',
+				connected: connected
+			}))
 	}
 
 	private resetChat() {
 		this.messages = [];
 	}
 
-	private getResponse(input: string, callback: (message: Message) => void) {
-		axios.post('http://localhost:5000/chatbot/interact', {
-			message: input,
-			session_id: 'someuuid',
-			context: []
-		}, {
-			headers: {
-				'X-Security-Code': 'st@ckass!st'
+	private getChatbotMessage(input: string, callback: (message: Message) => void) {
+		this.chatbotClient.interact(this.session.createChatbotRequest(input), chatbotResponse => {
+			console.log(chatbotResponse);
+			var message;
+			switch (chatbotResponse.response_type) {
+				case 'RESULTS':
+					message = new ResultsMessage(
+						chatbotResponse.text, 
+						chatbotResponse.timestamp, 
+						chatbotResponse.results);
+					break;
+				case 'TOO_MANY_RESULTS':
+					message = new TooManyResultsMessage(
+						chatbotResponse.text, 
+						chatbotResponse.timestamp, 
+						chatbotResponse.results, 
+						chatbotResponse.suggested_context);
+					break;
+				default:
+					message = new Message(
+						chatbotResponse.text,
+						MessageDirection.RECEIVED,
+						chatbotResponse.timestamp);
 			}
-		}).then(response => {
-			console.log(response)
-			callback(new Message(response.data.message, MessageDirection.RECEIVED, new Date(response.data.timestamp)))
+			callback(message)
 		})
 	}
 
@@ -101,9 +111,17 @@ export class StackAssistView {
 						<link rel="stylesheet" href="${stylesheetUri}" />
 					</head>
 					<body>
-						<div class="sa-wrapper">
+						<div class="sa-wrapper" id="sa-wrapper">
 							<div class="sa-toolbar">
 								<button id="sa-button-reset-chat">Reset Chat</button>
+							</div>
+							<div class="sa-alert-wrapper">
+								<div id="sa-alert-lost-connection" class="sa-alert">
+									<div class="sa-alert-message">Unable to connect to StackAssist server</div>
+									<a class="sa-alert-action" id="sa-button-check-connection">
+										<i class="fas fa-sync"></i>
+									</a>
+								</div>
 							</div>
 							<div class="sa-conversation">
 								<ul class="sa-chat" id="sa-list-chat">
@@ -140,32 +158,57 @@ enum MessageDirection {
 
 class Message {
 	timestamp: Date;
-	message: string;
+	text: string;
 	direction: MessageDirection;
 
-	constructor(message: string, direction: MessageDirection, timestamp: Date = new Date()) {
-		this.message = message;
+	constructor(text: string, direction: MessageDirection, timestamp: Date = new Date()) {
+		this.text = text;
 		this.direction = direction;
 		this.timestamp = timestamp;
-	}
-
-	private getMessageSender() {
-		switch (this.direction) {
-			case MessageDirection.SENT:
-				return 'You';
-			case MessageDirection.RECEIVED:
-				return 'StackAssist Bot';
-		}
 	}
 
 	public render() {
 		return `
 			<li class="sa-message-wrapper sa-message-${MessageDirection[this.direction].toLowerCase()}">
 				<div class="sa-message">
-					<div class="sa-message-content">${this.message}</div>
-					<div class="sa-message-timestamp">12:40</div>
+					<div class="sa-message-content">${this.text}</div>
+					<div class="sa-message-timestamp">${moment(this.timestamp).format('HH:mm')}</div>
 				</div>
 			</li>
 		`;
 	}
+}
+
+class ResultsMessage extends Message {
+	results: ChatbotResult[] = [];
+
+	constructor(text: string, timestamp: Date, results: ChatbotResult[]) {
+		super(text, MessageDirection.RECEIVED, timestamp)
+		this.results = results;
+	}
+}
+
+class TooManyResultsMessage extends ResultsMessage {
+	suggested_context: string[] = [];
+	
+	constructor(text: string, timestamp: Date, results: ChatbotResult[], suggested_context: string[]) {
+		super(text, timestamp, results);
+		this.suggested_context = suggested_context;
+	}
+}
+
+class ChatSession {
+	session_id: string;
+	context: string[];
+	messages: any = {};
+
+	constructor() {
+		this.session_id = uuid().toString()
+		this.context = [];
+	}
+
+	public createChatbotRequest(input: string): ChatbotRequest {
+		return new ChatbotRequest(this.session_id, input, this.context);
+	}
+
 }

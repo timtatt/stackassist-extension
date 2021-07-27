@@ -46,9 +46,12 @@
     "vscode-test": "^1.5.2"
   },
   "dependencies": {
+    "@types/uuid": "^8.3.1",
     "axios": "^0.21.1",
     "gulp": "^4.0.2",
     "gulp-sass": "^5.0.0",
-    "node-sass": "^6.0.1"
+    "moment": "^2.29.1",
+    "node-sass": "^6.0.1",
+    "uuid": "^3.4.0"
   }
 }
