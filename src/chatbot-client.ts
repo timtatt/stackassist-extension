@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 export class ChatbotClient {
-    private base_uri = "http://localhost:5000";
+    private base_uri = "http://localhost:80";
 
     private getHeaders() {
         return {
@@ -26,9 +26,9 @@ export class ChatbotClient {
 }
 
 export class ChatbotRequest {
-    session_id: string;
-    message: string;
-    context: string[];
+    session_id:  string;
+    message:  string;
+    context:  string[];
 
     constructor(session_id: string, message: string, context: string[]) {
         this.session_id = session_id;
@@ -38,17 +38,17 @@ export class ChatbotRequest {
 }
 
 export class ChatbotResponse {
-    context: string[] = [];
-    response_type: string = '';
-    results: ChatbotResult[] = [];
-    suggested_context: string[] = [];
-    text: string = '';
-    timestamp: Date = new Date();
+    context:  string[] = [];
+    response_type:  string = '';
+    results:  ChatbotResult[] = [];
+    suggested_context:  string[] = [];
+    text:  string = '';
+    timestamp:  Date = new Date();
 }
 
 export class ChatbotResult {
-    content: string = '';
-    title: string = '';
-    snippet: string = '';
-    url: string = '';
+    content:  string = '';
+    title:  string = '';
+    snippet:  string = '';
+    url:  string = '';
 }

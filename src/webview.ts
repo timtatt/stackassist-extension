@@ -6,11 +6,11 @@ import { v4 as uuid } from 'uuid';
 import * as moment from 'moment';
 
 export class StackAssistView {
-	private extensionUri: vscode.Uri;
-	private chatbotClient: ChatbotClient;
-	private panel: vscode.WebviewPanel;
-	private session: ChatSession = new ChatSession();
-	private messages: Message[] = [];
+	private extensionUri:  vscode.Uri;
+	private chatbotClient:  ChatbotClient;
+	private panel:  vscode.WebviewPanel;
+	private session:  ChatSession = new ChatSession();
+	private messages:  Message[] = [];
 
 	constructor(extensionUri: vscode.Uri, panel: vscode.WebviewPanel, chatbotClient: ChatbotClient) {
 		this.extensionUri = extensionUri;
@@ -157,9 +157,9 @@ enum MessageDirection {
 }
 
 class Message {
-	timestamp: Date;
-	text: string;
-	direction: MessageDirection;
+	timestamp:  Date;
+	text:  string;
+	direction:  MessageDirection;
 
 	constructor(text: string, direction: MessageDirection, timestamp: Date = new Date()) {
 		this.text = text;
@@ -167,40 +167,102 @@ class Message {
 		this.timestamp = timestamp;
 	}
 
-	public render() {
+	public render(): string {
 		return `
 			<li class="sa-message-wrapper sa-message-${MessageDirection[this.direction].toLowerCase()}">
 				<div class="sa-message">
-					<div class="sa-message-content">${this.text}</div>
-					<div class="sa-message-timestamp">${moment(this.timestamp).format('HH:mm')}</div>
+					${this.renderContent()}
 				</div>
 			</li>
+		`;
+	}
+
+	protected renderContent(): string {
+		return `
+			<div class="sa-message-bubble">
+				<div class="sa-message-content">${this.text}</div>
+				<div class="sa-message-timestamp">${moment(this.timestamp).format('HH:mm')}</div>
+			</div>
 		`;
 	}
 }
 
 class ResultsMessage extends Message {
-	results: ChatbotResult[] = [];
+	results:  ChatbotResult[] = [];
 
 	constructor(text: string, timestamp: Date, results: ChatbotResult[]) {
 		super(text, MessageDirection.RECEIVED, timestamp)
 		this.results = results;
 	}
+
+	public renderContent(): string {
+		return `
+			<div class="sa-message-bubble">
+				<div class="sa-message-content">${this.text}</div>
+				<div class="sa-message-timestamp">${moment(this.timestamp).format('HH:mm')}</div>
+			</div>
+			<ul class="sa-results">
+				<li class="sa-result">
+					<div class="sa-result-thumbnail">
+						<img src="#" />
+					</div>
+					<div class="sa-result-content">
+						<div class="sa-result-title">Post title</div>
+						<div class="sa-result-subtitle">
+							Score: 10
+						</div>
+					</div>
+					<button class="sa-result-navigate">
+						<i class="fas fa-chevron-right"></i>
+					</button>
+				</li>
+			</ul>
+		`;
+	}
 }
 
 class TooManyResultsMessage extends ResultsMessage {
-	suggested_context: string[] = [];
+	suggested_context:  string[] = [];
 	
 	constructor(text: string, timestamp: Date, results: ChatbotResult[], suggested_context: string[]) {
 		super(text, timestamp, results);
 		this.suggested_context = suggested_context;
 	}
+
+	public renderContent(): string {
+		var html = `
+			<div class="sa-message-bubble">
+				<div class="sa-message-content">${this.text}</div>
+				<div class="sa-message-timestamp">${moment(this.timestamp).format('HH:mm')}</div>
+			</div>
+			<form class="sa-additional-context">
+				<div class="sa-context-grid">
+		`;
+
+		for (var context of this.suggested_context) {
+			html += `
+				<label class="sa-context-option">
+					<input type="checkbox" name="${context}" value="true">
+					<span>${context}</span>
+				</label>
+			`;
+		}
+
+		html += `
+				</div>
+				<div class="sa-message-footer">
+					<button class="sa-message-footer-button">Add to Search</button>
+				</div>
+			</form>
+		`;
+		return html;
+	}
 }
 
 class ChatSession {
-	session_id: string;
-	context: string[];
-	messages: any = {};
+	session_id:  string;
+	context:  string[];
+	messages:  any = {};
 
 	constructor() {
 		this.session_id = uuid().toString()
