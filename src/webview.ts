@@ -10,7 +10,6 @@ export class StackAssistView {
 	private chatbotClient:  ChatbotClient;
 	private panel:  vscode.WebviewPanel;
 	private session:  ChatSession = new ChatSession();
-	private messages:  Message[] = [];
 
 	constructor(extensionUri: vscode.Uri, panel: vscode.WebviewPanel, chatbotClient: ChatbotClient) {
 		this.extensionUri = extensionUri;
@@ -21,15 +20,16 @@ export class StackAssistView {
 			switch (event.command) {
 				case 'sendMessage':
 					const message = new Message(event.text, MessageDirection.SENT)
-					this.messages.push(message);
+					this.session.addMessage(message)
 					panel.webview.postMessage({
 						command: 'newMessage',
-						renderedMessage: message.render()
+						renderedMessage: message.render(this)
 					})
-					this.getChatbotMessage(message.text, receivedMessage => {
+					this.getChatbotMessage(message, receivedMessage => {
 						panel.webview.postMessage({
 							command: 'newMessage',
-							renderedMessage: receivedMessage.render()
+							renderedContext: this.renderContext(),
+							renderedMessage: receivedMessage.render(this)
 						})
 					});
 					return;
@@ -39,10 +39,43 @@ export class StackAssistView {
 				case 'checkConnectivity':
 					this.checkConnectivity();
 					return;
+				case 'addContext':
+					this.session.context = this.session.context.concat(event.additional_context);
+					console.log(this.session.context);
+					
+					// TODO add endpoint for just updating context
+					this.getChatbotMessage(new Message("", MessageDirection.SENT), receivedMessage => {
+						panel.webview.postMessage({
+							command: 'newMessage',
+							renderedContext: this.renderContext(),
+							renderedMessage: receivedMessage.render(this)
+						})
+					});
+					return;
+				case 'removeContext':
+					this.session.context = this.session.context.filter(item => !event.context.includes(item))
+					this.getChatbotMessage(new Message("", MessageDirection.SENT), receivedMessage => {
+						panel.webview.postMessage({
+							command: 'newMessage',
+							renderedContext: this.renderContext(),
+							renderedMessage: receivedMessage.render(this)
+						})
+					});
+					return;
+				case 'getEstimates':
+					this.chatbotClient.estimateContextCounts(this.session.context.concat(event.selected_context), event.suggested_context, response => {
+						panel.webview.postMessage({
+							command: 'estimatesReceived',
+							message_id: event.message_id,
+							count: response.count,
+							estimates: response.estimates
+						})
+					})
+					return;
 			}
 		})
 
-		panel.webview.html = this.render(panel.webview);
+		panel.webview.html = this.render();
 
 		this.checkConnectivity();
 		setInterval(() => this.checkConnectivity(), 5000);
@@ -65,24 +98,27 @@ export class StackAssistView {
 	}
 
 	private resetChat() {
-		this.messages = [];
+		this.session = new ChatSession();
 	}
 
-	private getChatbotMessage(input: string, callback: (message: Message) => void) {
-		this.chatbotClient.interact(this.session.createChatbotRequest(input), chatbotResponse => {
-			console.log(chatbotResponse);
+	private getChatbotMessage(message: Message, callback: (message: Message) => void) {
+		this.chatbotClient.interact(this.session.createChatbotRequest(message), chatbotResponse => {
+			this.session.context = chatbotResponse.context
 			var message;
 			switch (chatbotResponse.response_type) {
 				case 'RESULTS':
+					console.log(chatbotResponse.results)
 					message = new ResultsMessage(
 						chatbotResponse.text, 
 						chatbotResponse.timestamp, 
+						chatbotResponse.message_id,
 						chatbotResponse.results);
 					break;
 				case 'TOO_MANY_RESULTS':
 					message = new TooManyResultsMessage(
 						chatbotResponse.text, 
 						chatbotResponse.timestamp, 
+						chatbotResponse.message_id,
 						chatbotResponse.results, 
 						chatbotResponse.suggested_context);
 					break;
@@ -90,30 +126,31 @@ export class StackAssistView {
 					message = new Message(
 						chatbotResponse.text,
 						MessageDirection.RECEIVED,
-						chatbotResponse.timestamp);
+						chatbotResponse.timestamp,
+						chatbotResponse.message_id);
 			}
 			callback(message)
 		})
 	}
 
-	private render(webview: vscode.Webview) {
-		const fontAwesomeUri = webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'resources/style/fontawesome/css', 'all.min.css'));
-		const stylesheetUri = webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'resources/style', 'stackassist.css'));
-		const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'resources/scripts', 'stackassist.js'));
+	public getResource(type: string, filename: string) {
+		return this.panel.webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'resources/' + type, filename));
+	}
 
+	private render() {
 		return `
 				<html>
 					<head>
 						<meta charset="UTF-8" />
 						<meta name="viewport" content="width=device-width, initial-scale=1.0" /> 
 						<title>StackAssist</title>
-						<link rel="stylesheet" href="${fontAwesomeUri}" />
-						<link rel="stylesheet" href="${stylesheetUri}" />
+						<link rel="stylesheet" href="${this.getResource('style/fontawesome/css', 'all.min.css')}" />
+						<link rel="stylesheet" href="${this.getResource('style', 'stackassist.css')}" />
 					</head>
 					<body>
 						<div class="sa-wrapper" id="sa-wrapper">
 							<div class="sa-toolbar">
-								<button id="sa-button-reset-chat">Reset Chat</button>
+								<button id="sa-button-reset-chat"><i class="fas fa-trash"></i>Reset Chat</button>
 							</div>
 							<div class="sa-alert-wrapper">
 								<div id="sa-alert-lost-connection" class="sa-alert">
@@ -130,24 +167,31 @@ export class StackAssistView {
 								<div class="sa-conversation-buffer"></div>
 							</div>
 							<div class="sa-footer">
-								<ul class="sa-context">
-									<li class="sa-context-item">docker</li>
-									<li class="sa-context-item">network</li>
-								</ul>
+								<ul class="sa-context">${this.renderContext()}</ul>
 								<form action="#" id="sa-form-send-message">
 									<input type="text" name="message" id="sa-field-message" placeholder="Start typing.." />
 									<button type="submit">Send</button>
 								</form>
 							</div>
 						</div>
-						<script src="${scriptUri}"></script>
+						<script src="${this.getResource('scripts', 'jquery-3.6.0.min.js')}"></script>
+						<script src="${this.getResource('scripts', 'stackassist.js')}"></script>
 					</body>
 				</html>
 			`;
 	}
 
+	private renderContext() {
+		var html = '';
+		for (var context of this.session.context) {
+			html += `<li class="sa-context-item">${context}</li>`;
+		} 
+		return html;
+	}
+
 	private renderMessages() {
-		return this.messages.map(message => message.render()).join('')
+		return this.session.getMessagesChronologically()
+			.map(message => message.render(this)).join('');
 	}
 }
 
@@ -157,27 +201,23 @@ enum MessageDirection {
 }
 
 class Message {
-	timestamp:  Date;
-	text:  string;
-	direction:  MessageDirection;
+	constructor(
+		public text: string, 
+		public direction: MessageDirection, 
+		public timestamp: Date = new Date(), 
+		public message_id=uuid().toString()) {}
 
-	constructor(text: string, direction: MessageDirection, timestamp: Date = new Date()) {
-		this.text = text;
-		this.direction = direction;
-		this.timestamp = timestamp;
-	}
-
-	public render(): string {
+	public render(view: StackAssistView): string {
 		return `
-			<li class="sa-message-wrapper sa-message-${MessageDirection[this.direction].toLowerCase()}">
+			<li class="sa-message-wrapper sa-message-${MessageDirection[this.direction].toLowerCase()}" id="${this.message_id}">
 				<div class="sa-message">
-					${this.renderContent()}
+					${this.renderContent(view)}
 				</div>
 			</li>
 		`;
 	}
 
-	protected renderContent(): string {
+	protected renderContent(view: StackAssistView): string {
 		return `
 			<div class="sa-message-bubble">
 				<div class="sa-message-content">${this.text}</div>
@@ -188,26 +228,39 @@ class Message {
 }
 
 class ResultsMessage extends Message {
-	results:  ChatbotResult[] = [];
-
-	constructor(text: string, timestamp: Date, results: ChatbotResult[]) {
-		super(text, MessageDirection.RECEIVED, timestamp)
-		this.results = results;
+	constructor(text: string, timestamp: Date, message_id: string, public results: ChatbotResult[] = []) {
+		super(text, MessageDirection.RECEIVED, timestamp, message_id)
 	}
 
-	public renderContent(): string {
-		return `
+	public renderContent(view: StackAssistView): string {
+		var html = `
 			<div class="sa-message-bubble">
 				<div class="sa-message-content">${this.text}</div>
 				<div class="sa-message-timestamp">${moment(this.timestamp).format('HH:mm')}</div>
 			</div>
 			<ul class="sa-results">
-				<li class="sa-result">
+		`;
+
+		for (var result of this.results) {
+			html += this.renderResult(view, result);
+		}
+					
+		html += `	
+			</ul>
+		`;
+
+		return html;
+	}
+
+	private renderResult(view: StackAssistView, result: ChatbotResult) {
+		return `
+			<li class="sa-result">
+				<a href="${result.url}">
 					<div class="sa-result-thumbnail">
-						<img src="#" />
+						<img src="${view.getResource('icons', 'stackoverflow.svg')}" />
 					</div>
 					<div class="sa-result-content">
-						<div class="sa-result-title">Post title</div>
+						<div class="sa-result-title">${result.title}</div>
 						<div class="sa-result-subtitle">
 							Score: 10
 						</div>
@@ -215,18 +268,15 @@ class ResultsMessage extends Message {
 					<button class="sa-result-navigate">
 						<i class="fas fa-chevron-right"></i>
 					</button>
-				</li>
-			</ul>
+				</a>
+			</li>
 		`;
 	}
 }
 
 class TooManyResultsMessage extends ResultsMessage {
-	suggested_context:  string[] = [];
-	
-	constructor(text: string, timestamp: Date, results: ChatbotResult[], suggested_context: string[]) {
-		super(text, timestamp, results);
-		this.suggested_context = suggested_context;
+	constructor(text: string, timestamp: Date, message_id: string, results: ChatbotResult[], public suggested_context: string[] = []) {
+		super(text, timestamp, message_id, results);
 	}
 
 	public renderContent(): string {
@@ -243,7 +293,10 @@ class TooManyResultsMessage extends ResultsMessage {
 			html += `
 				<label class="sa-context-option">
 					<input type="checkbox" name="${context}" value="true">
-					<span>${context}</span>
+					<span class="sa-context-option-inner">
+						<span>${context}</span>
+						<span class="counter">10</span>
+					</span>
 				</label>
 			`;
 		}
@@ -251,7 +304,8 @@ class TooManyResultsMessage extends ResultsMessage {
 		html += `
 				</div>
 				<div class="sa-message-footer">
-					<button class="sa-message-footer-button">Add to Search</button>
+					<button class="sa-message-footer-button"><i class="fas fa-plus"></i>Add to Search</button>
+					<button class="sa-button-view-results"><i class="fas fa-search"></i>View Top 3 Results</button>
 				</div>
 			</form>
 		`;
@@ -263,14 +317,24 @@ class ChatSession {
 	session_id:  string;
 	context:  string[];
 	messages:  any = {};
+	chronologicalMessages: string[] = [];
 
 	constructor() {
 		this.session_id = uuid().toString()
 		this.context = [];
 	}
 
-	public createChatbotRequest(input: string): ChatbotRequest {
-		return new ChatbotRequest(this.session_id, input, this.context);
+	public createChatbotRequest(message: Message): ChatbotRequest {
+		return new ChatbotRequest(this.session_id, message.message_id, message.text, this.context);
+	}
+
+	public addMessage(message: Message) {
+		this.messages[message.message_id] = message;
+		this.chronologicalMessages.push(message.message_id);
+	}
+
+	public getMessagesChronologically(): Message[] {
+		return this.chronologicalMessages.map(message_id => this.messages[message_id]);
 	}
 
 }

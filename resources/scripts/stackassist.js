@@ -1,63 +1,140 @@
-(() => {
-    const vscode = acquireVsCodeApi();
-    const chatList = document.getElementById('sa-list-chat')
-    const sendMessageForm = document.getElementById('sa-form-send-message')
-    const messageField = document.getElementById('sa-field-message');
-    const resetChatButton = document.getElementById('sa-button-reset-chat');
-    const wrapper = document.getElementById('sa-wrapper');
+($ => {
+    $(() => {
+        const vscode = acquireVsCodeApi();
+        const chatList = $('#sa-list-chat');
+        const sendMessageForm = $('#sa-form-send-message');
+        const messageField = $('#sa-field-message');
+        const resetChatButton = $('#sa-button-reset-chat');
+        const wrapper = $('#sa-wrapper');
+        const context = $('.sa-context');
 
-    document.getElementById('sa-button-check-connection').addEventListener('click', event => {
-        vscode.postMessage({
-            command: 'checkConnectivity'
-        });
-    });
-
-    sendMessageForm.addEventListener('submit', event => {
-        event.preventDefault();
-        event.stopPropagation();
-
-        var value = messageField.value;
-
-        if (value.trim() != '') {
+        $('#sa-button-check-connection').on('click', event => {
             vscode.postMessage({
-                command: 'sendMessage',
-                text: messageField.value,
-            })
-
-            messageField.value = ""
-        }
-    });
-
-    resetChatButton.addEventListener('click', event => {
-        chatList.innerHTML = '';
-        vscode.postMessage({
-            command: 'resetChat',
+                command: 'checkConnectivity'
+            });
         });
-    })
 
-    document.addEventListener('click', event => {
-        if (!sendMessageForm.contains(event.target)
-            && window.getSelection().getRangeAt(0).collapsed == true) {
-            messageField.focus();
+        sendMessageForm.on('submit', event => {
+            event.preventDefault();
+            event.stopPropagation();
+
+            var value = messageField.val().trim();
+
+            if (value != '') {
+                vscode.postMessage({
+                    command: 'sendMessage',
+                    text: value,
+                })
+
+                messageField.val('')
+            }
+        });
+
+        resetChatButton.on('click', event => {
+            chatList.html('');
+            context.html('');
+            vscode.postMessage({
+                command: 'resetChat',
+            });
+        })
+
+        $(document).on('click', event => {
+            if (!$.contains(sendMessageForm, event.target)
+                && window.getSelection().getRangeAt(0).collapsed == true) {
+                messageField.focus();
+            }
+        })
+
+        context.on('click', '.sa-context-item', event => {
+            const element = $(event.currentTarget);
+            const contextItem = element.text();
+            vscode.postMessage({
+                command: 'removeContext',
+                context: [contextItem]
+            });
+        })
+
+        window.addEventListener('message', event => {
+            switch (event.data.command) {
+                case 'newMessage':
+                    var element = $(event.data.renderedMessage);
+                    context.html(event.data.renderedContext);
+                    registerMessageEvents(element);
+                    chatList.append(element)
+                    return;
+                case 'connectivityChanged':
+                    if (event.data.connected === true && wrapper.hasClass('sa-lost-connection')) {
+                        wrapper.removeClass('sa-lost-connection');
+                        messageField.disabled = false;
+                        sendMessageForm.find('button').disabled = false;
+                    } else if (event.data.connected === false && !wrapper.hasClass('sa-lost-connection')) {
+                        wrapper.addClass('sa-lost-connection');
+                        messageField.disabled = true;
+                        sendMessageForm.find('button').disabled = true;
+                    }
+                    return;
+                case 'estimatesReceived':
+                    const message = chatList.find('#' + event.data.message_id);
+                    message.find('.sa-additional-context .sa-context-option').each((i, e) => {
+                        const element = $(e);
+                        const checkbox = element.find('input[type=checkbox]');
+                        const estimate = checkbox.is(':checked') ? 
+                            event.data.count :
+                            event.data.estimates[checkbox.attr('name')];
+
+                        element.find('.counter').html(estimate);
+                    });
+                    return;
+            }
+        })
+
+        function getEstimates(form) {
+            var selected_context = [];
+            var suggested_context = [];
+
+            const message = form.closest('.sa-message-wrapper');
+            form.closest('.sa-additional-context')
+                .find('input[type=checkbox]')
+                .each((i, e) => {
+                    var element = $(e);
+                    if (element.is(':checked')) {
+                        selected_context.push(element.attr('name'));
+                    } else {
+                        suggested_context.push(element.attr('name'));
+                    }
+                });
+
+            vscode.postMessage({
+                command: 'getEstimates',
+                message_id: message.attr('id'),
+                selected_context,
+                suggested_context
+            });
+        }
+
+        function registerMessageEvents(messageElement) {
+            getEstimates(messageElement.find('.sa-additional-context'));
+            messageElement.find('.sa-context-option input').on('change', event => {
+                const form = $(event.target);
+                getEstimates(form);
+            });
+
+            messageElement.find('.sa-additional-context').on('submit', event => {
+                event.preventDefault();
+                event.stopPropagation();
+
+                const form = $(event.target);
+                var additional_context = [];
+                form.find('input[type=checkbox]:checked').each((i, e) => {
+                    const element = $(e);
+                    additional_context.push(element.attr('name'));
+                    element.prop('disabled', true);
+                });
+                vscode.postMessage({
+                    command: 'addContext',
+                    additional_context
+                });
+            });
         }
     })
-
-    window.addEventListener('message', event => {
-        switch (event.data.command) {
-            case 'newMessage':
-                chatList.innerHTML += event.data.renderedMessage;
-                return;
-            case 'connectivityChanged':
-                if (event.data.connected === true && wrapper.classList.contains('sa-lost-connection')) {
-                    wrapper.classList.remove('sa-lost-connection');
-                    messageField.disabled = false;
-                    sendMessageForm.querySelector('button').disabled = false;
-                } else if (event.data.connected === false && !wrapper.classList.contains('sa-lost-connection')) {
-                    wrapper.classList.add('sa-lost-connection');
-                    messageField.disabled = true;
-                    sendMessageForm.querySelector('button').disabled = true;
-                }
-        }
-    })
-
-})()
+})(jQuery)

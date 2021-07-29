@@ -27,7 +27,7 @@
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "scss": "node-sass --watch resources/style -o resources/style",
+    "scss": "node-sass --watch resources/style/stackassist.scss -o resources/style",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
     "test": "node ./out/test/runTest.js"
