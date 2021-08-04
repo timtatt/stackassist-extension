@@ -23,11 +23,13 @@ export class StackAssistView {
 					this.session.addMessage(message)
 					panel.webview.postMessage({
 						command: 'newMessage',
+						direction: 'sent',
 						renderedMessage: message.render(this)
 					})
 					this.getChatbotMessage(message, receivedMessage => {
 						panel.webview.postMessage({
 							command: 'newMessage',
+							direction: 'received',
 							renderedContext: this.renderContext(),
 							renderedMessage: receivedMessage.render(this)
 						})
@@ -47,6 +49,7 @@ export class StackAssistView {
 					this.getChatbotMessage(new Message("", MessageDirection.SENT), receivedMessage => {
 						panel.webview.postMessage({
 							command: 'newMessage',
+							direction: 'received',
 							renderedContext: this.renderContext(),
 							renderedMessage: receivedMessage.render(this)
 						})
@@ -57,6 +60,7 @@ export class StackAssistView {
 					this.getChatbotMessage(new Message("", MessageDirection.SENT), receivedMessage => {
 						panel.webview.postMessage({
 							command: 'newMessage',
+							direction: 'received',
 							renderedContext: this.renderContext(),
 							renderedMessage: receivedMessage.render(this)
 						})
@@ -161,6 +165,13 @@ export class StackAssistView {
 								</div>
 							</div>
 							<div class="sa-conversation">
+								<div class="sa-typing">
+									<div class="sa-ellipsis">
+										<span></span>
+										<span></span>
+										<span></span>
+									</div>
+								</div>
 								<ul class="sa-chat" id="sa-list-chat">
 									${this.renderMessages()}
 								</ul>
@@ -255,20 +266,24 @@ class ResultsMessage extends Message {
 	private renderResult(view: StackAssistView, result: ChatbotResult) {
 		return `
 			<li class="sa-result">
-				<a href="${result.url}">
+				<div class="sa-result-preview">
 					<div class="sa-result-thumbnail">
 						<img src="${view.getResource('icons', 'stackoverflow.svg')}" />
 					</div>
 					<div class="sa-result-content">
 						<div class="sa-result-title">${result.title}</div>
 						<div class="sa-result-subtitle">
-							Score: 10
+							Score: ${result.score}
 						</div>
 					</div>
 					<button class="sa-result-navigate">
 						<i class="fas fa-chevron-right"></i>
 					</button>
-				</a>
+				</div>
+				<div class="sa-result-details">
+					<div class="sa-result-answer">${result.content}</div>
+					<a href="${result.url}" class="sa-button sa-button-orange sa-button-small">View on StackOverflow</a>
+				</div>
 			</li>
 		`;
 	}

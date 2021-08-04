@@ -21,6 +21,7 @@
             var value = messageField.val().trim();
 
             if (value != '') {
+                wrapper.addClass('sa-loading');
                 vscode.postMessage({
                     command: 'sendMessage',
                     text: value,
@@ -57,6 +58,10 @@
         window.addEventListener('message', event => {
             switch (event.data.command) {
                 case 'newMessage':
+                    if (event.data.direction == 'received') {
+                        wrapper.removeClass('sa-loading');
+                    }
+                    
                     var element = $(event.data.renderedMessage);
                     context.html(event.data.renderedContext);
                     registerMessageEvents(element);
@@ -134,6 +139,12 @@
                     command: 'addContext',
                     additional_context
                 });
+            });
+
+            messageElement.find('.sa-result-preview').on('click', event => {
+                const result = $(event.currentTarget).parent();
+                result.toggleClass('expanded');
+                result.find('.sa-result-details').slideToggle(200);
             });
         }
     })

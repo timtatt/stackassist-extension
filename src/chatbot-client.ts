@@ -64,8 +64,9 @@ export class ChatbotEstimateResponse {
 }
 
 export class ChatbotResult {
-    content:  string = '';
-    title:  string = '';
-    snippet:  string = '';
-    url:  string = '';
+    content: string = '';
+    title: string = '';
+    snippet: string = '';
+    url: string = '';
+    score: number = 0;
 }
