@@ -71,7 +71,7 @@ export class StackAssistView {
 		panel.webview.html = this.render();
 
 		this.checkConnectivity();
-		setInterval(() => this.checkConnectivity(), 5000);
+		setInterval(() => this.checkConnectivity(), 30000);
 	}
 
 	static createPanel(context: vscode.ExtensionContext, chatbotClient: ChatbotClient) {
@@ -307,7 +307,7 @@ class ResultsMessage extends Message {
 		html += `
 					</div>
 					<button class="sa-result-navigate">
-						<i class="fas fa-chevron-right"></i>
+						<i class="fas ${result.external ? 'fa-external-link-alt' : 'fa-chevron-right'}"></i>
 					</button>
 				</div>
 		`;

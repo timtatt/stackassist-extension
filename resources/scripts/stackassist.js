@@ -143,14 +143,18 @@
                 });
             });
 
-            messageElement.find('.sa-button-reduce-search').on('click', _ => {
+            messageElement.find('.sa-button-reduce-search').on('click', event => {
+                $(event.currentTarget).attr('disabled', true);
+                wrapper.addClass('sa-loading');
                 vscode.postMessage({
                     command: 'changeScope',
                     useGoogleSearch: false,
                 });
             });
 
-            messageElement.find('.sa-button-expand-search').on('click', _ => {
+            messageElement.find('.sa-button-expand-search').on('click', event => {
+                $(event.currentTarget).attr('disabled', true);
+                wrapper.addClass('sa-loading');
                 vscode.postMessage({
                     command: 'changeScope',
                     useGoogleSearch: true,

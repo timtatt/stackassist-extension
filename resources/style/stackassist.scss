@@ -164,6 +164,7 @@ html, body {
                     display: inline-block;
                     font-size: 14px;
                     max-width: 75%;
+                    box-sizing: border-box;
 
                     .sa-message-sender {
                         font-weight: bold;
@@ -380,6 +381,13 @@ html, body {
 
                                 ol, ul {
                                     padding-left: 30px;
+                                }
+
+                                blockquote {
+                                    margin-left: 0;
+                                    margin-right: 0;
+                                    padding: 8px;
+                                    border-radius: 4px;
                                 }
                             }
                         }

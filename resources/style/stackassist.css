@@ -114,7 +114,8 @@ html, body {
           padding: 8px 16px;
           display: inline-block;
           font-size: 14px;
-          max-width: 75%; }
+          max-width: 75%;
+          box-sizing: border-box; }
           .sa-conversation .sa-chat .sa-message-wrapper .sa-message .sa-message-bubble .sa-message-sender {
             font-weight: bold;
             font-size: 12px; }
@@ -260,6 +261,11 @@ html, body {
                 border-radius: 2px; }
               .sa-conversation .sa-chat .sa-message-wrapper .sa-message .sa-results .sa-result .sa-result-details .sa-result-answer ol, .sa-conversation .sa-chat .sa-message-wrapper .sa-message .sa-results .sa-result .sa-result-details .sa-result-answer ul {
                 padding-left: 30px; }
+              .sa-conversation .sa-chat .sa-message-wrapper .sa-message .sa-results .sa-result .sa-result-details .sa-result-answer blockquote {
+                margin-left: 0;
+                margin-right: 0;
+                padding: 8px;
+                border-radius: 4px; }
 
 .sa-footer {
   flex: 0 0 auto; }
