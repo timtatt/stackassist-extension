@@ -35,6 +35,12 @@ export class StackAssistView {
 						})
 					});
 					return;
+				case 'changeScope':
+					this.session.useGoogleSearch = event.useGoogleSearch;
+					this.updateSessionParameters();
+				case 'openUrl':
+					vscode.env.openExternal(vscode.Uri.parse(event.url))
+					return;
 				case 'resetChat':
 					this.resetChat();
 					return;
@@ -43,28 +49,11 @@ export class StackAssistView {
 					return;
 				case 'addContext':
 					this.session.context = this.session.context.concat(event.additional_context);
-					console.log(this.session.context);
-					
-					// TODO add endpoint for just updating context
-					this.getChatbotMessage(new Message("", MessageDirection.SENT), receivedMessage => {
-						panel.webview.postMessage({
-							command: 'newMessage',
-							direction: 'received',
-							renderedContext: this.renderContext(),
-							renderedMessage: receivedMessage.render(this)
-						})
-					});
+					this.updateSessionParameters();
 					return;
 				case 'removeContext':
 					this.session.context = this.session.context.filter(item => !event.context.includes(item))
-					this.getChatbotMessage(new Message("", MessageDirection.SENT), receivedMessage => {
-						panel.webview.postMessage({
-							command: 'newMessage',
-							direction: 'received',
-							renderedContext: this.renderContext(),
-							renderedMessage: receivedMessage.render(this)
-						})
-					});
+					this.updateSessionParameters();
 					return;
 				case 'getEstimates':
 					this.chatbotClient.estimateContextCounts(this.session.context.concat(event.selected_context), event.suggested_context, response => {
@@ -93,6 +82,17 @@ export class StackAssistView {
 		return new StackAssistView(context.extensionUri, panel, chatbotClient);
 	}
 
+	private updateSessionParameters() {
+		this.getChatbotMessage(null, receivedMessage => {
+			this.panel.webview.postMessage({
+				command: 'newMessage',
+				direction: 'received',
+				renderedContext: this.renderContext(),
+				renderedMessage: receivedMessage.render(this)
+			})
+		});
+	}
+
 	private checkConnectivity() {
 		this.chatbotClient.checkConnectivity(connected => 
 			this.panel.webview.postMessage({
@@ -105,7 +105,7 @@ export class StackAssistView {
 		this.session = new ChatSession();
 	}
 
-	private getChatbotMessage(message: Message, callback: (message: Message) => void) {
+	private getChatbotMessage(message: Message | null, callback: (message: Message) => void) {
 		this.chatbotClient.interact(this.session.createChatbotRequest(message), chatbotResponse => {
 			this.session.context = chatbotResponse.context
 			var message;
@@ -139,6 +139,10 @@ export class StackAssistView {
 
 	public getResource(type: string, filename: string) {
 		return this.panel.webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'resources/' + type, filename));
+	}
+
+	public getSession() {
+		return this.session;
 	}
 
 	private render() {
@@ -258,34 +262,68 @@ class ResultsMessage extends Message {
 					
 		html += `	
 			</ul>
+			<div class="sa-message-footer">`;
+
+		if (view.getSession().useGoogleSearch == true) {
+			html += `<button class="sa-message-footer-button sa-button-small sa-button-reduce-search"><i class="fas fa-compress-alt"></i>Reduce to StackOverflow Search</button>`;
+		} else {
+			html += `<button class="sa-message-footer-button sa-button-small sa-button-expand-search"><i class="fas fa-arrows-alt-h"></i>Expand to Web Search</button>`;
+		}
+				
+		html += `
+			</div>
 		`;
 
 		return html;
 	}
 
 	private renderResult(view: StackAssistView, result: ChatbotResult) {
-		return `
-			<li class="sa-result">
+		const iconUrl = result.favicon ? result.favicon : view.getResource('icons', 'stackoverflow.svg');
+		var html = `
+			<li class="sa-result ${result.external ? 'sa-result-external' : ''}" data-url="${result.url}">
 				<div class="sa-result-preview">
 					<div class="sa-result-thumbnail">
-						<img src="${view.getResource('icons', 'stackoverflow.svg')}" />
+						<img src="${iconUrl}" />
 					</div>
 					<div class="sa-result-content">
 						<div class="sa-result-title">${result.title}</div>
-						<div class="sa-result-subtitle">
-							Score: ${result.score}
-						</div>
+		`;
+
+		if (result.score != null) {
+			html += `
+				<div class="sa-result-subtitle">
+					Score: ${result.score}
+				</div>
+			`;
+		} else if (result.url != '') {
+			html += `
+				<div class="sa-result-subtitle">
+					${result.url}
+				</div>
+			`;
+		}
+
+
+		html += `
 					</div>
 					<button class="sa-result-navigate">
 						<i class="fas fa-chevron-right"></i>
 					</button>
 				</div>
+		`;
+
+		if (result.external == false) {
+			html += `
 				<div class="sa-result-details">
 					<div class="sa-result-answer">${result.content}</div>
 					<a href="${result.url}" class="sa-button sa-button-orange sa-button-small">View on StackOverflow</a>
 				</div>
-			</li>
-		`;
+			`;
+		}
+
+		html += `</li>`;
+
+		return html;
 	}
 }
 
@@ -310,7 +348,7 @@ class TooManyResultsMessage extends ResultsMessage {
 					<input type="checkbox" name="${context}" value="true">
 					<span class="sa-context-option-inner">
 						<span>${context}</span>
-						<span class="counter">10</span>
+						<span class="counter">-</span>
 					</span>
 				</label>
 			`;
@@ -320,7 +358,6 @@ class TooManyResultsMessage extends ResultsMessage {
 				</div>
 				<div class="sa-message-footer">
 					<button class="sa-message-footer-button"><i class="fas fa-plus"></i>Add to Search</button>
-					<button class="sa-button-view-results"><i class="fas fa-search"></i>View Top 3 Results</button>
 				</div>
 			</form>
 		`;
@@ -333,14 +370,27 @@ class ChatSession {
 	context:  string[];
 	messages:  any = {};
 	chronologicalMessages: string[] = [];
+	useGoogleSearch: boolean = true;
 
 	constructor() {
 		this.session_id = uuid().toString()
 		this.context = [];
 	}
 
-	public createChatbotRequest(message: Message): ChatbotRequest {
-		return new ChatbotRequest(this.session_id, message.message_id, message.text, this.context);
+	public createChatbotRequest(message: Message | null): ChatbotRequest {
+		return message == null ?
+			new ChatbotRequest(
+				this.session_id,
+				uuid().toString(),
+				'',
+				this.context,
+				this.useGoogleSearch) :
+			new ChatbotRequest(
+				this.session_id,
+				message.message_id,
+				message.text,
+				this.context,
+				this.useGoogleSearch);
 	}
 
 	public addMessage(message: Message) {
@@ -350,6 +400,10 @@ class ChatSession {
 
 	public getMessagesChronologically(): Message[] {
 		return this.chronologicalMessages.map(message_id => this.messages[message_id]);
+	}
+
+	public toggleGoogleSearch(useGoogleSearch: boolean) {
+		this.useGoogleSearch = useGoogleSearch;
 	}
 
 }

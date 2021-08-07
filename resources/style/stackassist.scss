@@ -274,7 +274,6 @@ html, body {
                         max-width: 75%;
                         margin: 12px 0;
                         color: #E9E9E9;
-                        cursor: pointer;
                         transition: max-width 0.2s;
 
                         &.expanded {
@@ -287,6 +286,7 @@ html, body {
                         
                         .sa-result-preview {
                             padding: 12px;
+                            cursor: pointer;
                             text-decoration: none;
                             position: relative;
                             color: inherit;
@@ -366,6 +366,7 @@ html, body {
 
                                     code {
                                         padding: 0;
+                                        border-radius: 0px;
                                     }
                                 }
 
@@ -373,7 +374,8 @@ html, body {
                                     background-color: #50575f;
                                     color: #F8F8F8;
                                     padding: 2px 4px;
-                                    font-size:12px;
+                                    font-size: 12px;
+                                    border-radius: 2px;
                                 }
 
                                 ol, ul {
@@ -477,6 +479,7 @@ button, a.sa-button {
     transition: background-color 0.2s;
     cursor: pointer;
     text-decoration: none;
+    user-select: none;
 
     i.fas {
         margin-right: 6px;

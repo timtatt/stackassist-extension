@@ -188,7 +188,6 @@ html, body {
             max-width: 75%;
             margin: 12px 0;
             color: #E9E9E9;
-            cursor: pointer;
             transition: max-width 0.2s; }
             .sa-conversation .sa-chat .sa-message-wrapper .sa-message .sa-results .sa-result.expanded {
               max-width: 100%; }
@@ -196,6 +195,7 @@ html, body {
                 content: "\f078"; }
             .sa-conversation .sa-chat .sa-message-wrapper .sa-message .sa-results .sa-result .sa-result-preview {
               padding: 12px;
+              cursor: pointer;
               text-decoration: none;
               position: relative;
               color: inherit;
@@ -250,12 +250,14 @@ html, body {
                 padding: 12px;
                 border-radius: 4px; }
                 .sa-conversation .sa-chat .sa-message-wrapper .sa-message .sa-results .sa-result .sa-result-details .sa-result-answer pre code {
-                  padding: 0; }
+                  padding: 0;
+                  border-radius: 0px; }
               .sa-conversation .sa-chat .sa-message-wrapper .sa-message .sa-results .sa-result .sa-result-details .sa-result-answer code {
                 background-color: #50575f;
                 color: #F8F8F8;
                 padding: 2px 4px;
-                font-size: 12px; }
+                font-size: 12px;
+                border-radius: 2px; }
               .sa-conversation .sa-chat .sa-message-wrapper .sa-message .sa-results .sa-result .sa-result-details .sa-result-answer ol, .sa-conversation .sa-chat .sa-message-wrapper .sa-message .sa-results .sa-result .sa-result-details .sa-result-answer ul {
                 padding-left: 30px; }
 
@@ -329,7 +331,8 @@ button, a.sa-button {
   outline: none;
   transition: background-color 0.2s;
   cursor: pointer;
-  text-decoration: none; }
+  text-decoration: none;
+  user-select: none; }
   button i.fas, a.sa-button i.fas {
     margin-right: 6px; }
   button.sa-button-orange, a.sa-button.sa-button-orange {

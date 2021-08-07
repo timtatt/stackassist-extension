@@ -34,6 +34,7 @@
         resetChatButton.on('click', event => {
             chatList.html('');
             context.html('');
+            wrapper.removeClass('sa-loading');
             vscode.postMessage({
                 command: 'resetChat',
             });
@@ -61,7 +62,7 @@
                     if (event.data.direction == 'received') {
                         wrapper.removeClass('sa-loading');
                     }
-                    
+
                     var element = $(event.data.renderedMessage);
                     context.html(event.data.renderedContext);
                     registerMessageEvents(element);
@@ -74,6 +75,7 @@
                         sendMessageForm.find('button').disabled = false;
                     } else if (event.data.connected === false && !wrapper.hasClass('sa-lost-connection')) {
                         wrapper.addClass('sa-lost-connection');
+                        wrapper.removeClass('sa-loading');
                         messageField.disabled = true;
                         sendMessageForm.find('button').disabled = true;
                     }
@@ -93,7 +95,7 @@
             }
         })
 
-        function getEstimates(form) {
+        const getEstimates = (form) => {
             var selected_context = [];
             var suggested_context = [];
 
@@ -117,7 +119,7 @@
             });
         }
 
-        function registerMessageEvents(messageElement) {
+        const registerMessageEvents = (messageElement) => {
             getEstimates(messageElement.find('.sa-additional-context'));
             messageElement.find('.sa-context-option input').on('change', event => {
                 const form = $(event.target);
@@ -141,11 +143,38 @@
                 });
             });
 
-            messageElement.find('.sa-result-preview').on('click', event => {
-                const result = $(event.currentTarget).parent();
-                result.toggleClass('expanded');
-                result.find('.sa-result-details').slideToggle(200);
+            messageElement.find('.sa-button-reduce-search').on('click', _ => {
+                vscode.postMessage({
+                    command: 'changeScope',
+                    useGoogleSearch: false,
+                });
             });
+
+            messageElement.find('.sa-button-expand-search').on('click', _ => {
+                vscode.postMessage({
+                    command: 'changeScope',
+                    useGoogleSearch: true,
+                });
+            });
+
+            messageElement.find('.sa-result').each((i, e) => {
+                const result = $(e);
+                if (result.hasClass('sa-result-external')) {
+                    result.on('click', event => {
+                        const url = $(event.currentTarget).data('url');
+                        vscode.postMessage({
+                            command: 'openUrl',
+                            url: url,
+                        });
+                    });
+                } else {
+                    result.find('.sa-result-preview').on('click', event => {
+                        const result = $(event.currentTarget).parent();
+                        result.toggleClass('expanded');
+                        result.find('.sa-result-details').slideToggle(200);
+                    });
+                }
+            });            
         }
     })
 })(jQuery)

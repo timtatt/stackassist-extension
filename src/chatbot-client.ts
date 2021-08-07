@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 export class ChatbotClient {
-    private base_uri = "http://localhost:5000";
+    private baseUri = "http://localhost:5000";
 
     private getHeaders() {
         return {
@@ -10,7 +10,7 @@ export class ChatbotClient {
     }
 
     public checkConnectivity(callback: (connected: boolean) => void) {
-        axios.get(this.base_uri + '/ping', {
+        axios.get(this.baseUri + '/ping', {
             headers: this.getHeaders()
         })
         .then(_ => callback(true))
@@ -18,15 +18,16 @@ export class ChatbotClient {
     }
 
     public interact(request: ChatbotRequest, callback: (chatbotResponse: ChatbotResponse) => void) {
-        axios.post(this.base_uri + '/chatbot/interact', request, {
+        axios.post(this.baseUri + '/chatbot/interact', request, {
             headers: this.getHeaders()
-        }).then(response => callback(Object.assign(new ChatbotResponse(), response.data.response)))
+        })
+        .then(response => callback(Object.assign(new ChatbotResponse(), response.data.response)));
     }
 
-    public estimateContextCounts(context: string[], suggested_context: string[], callback: (estimateResponse: ChatbotEstimateResponse) => void) {
-        axios.post(this.base_uri + '/chatbot/estimate', {
+    public estimateContextCounts(context: string[], suggestedContext: string[], callback: (estimateResponse: ChatbotEstimateResponse) => void) {
+        axios.post(this.baseUri + '/chatbot/estimate', {
             context: context,
-            suggested_context: suggested_context,
+            suggested_context: suggestedContext,
         }, {
             headers: this.getHeaders()
         }).then(response => callback(Object.assign(new ChatbotEstimateResponse(), response.data.response)))
@@ -35,17 +36,12 @@ export class ChatbotClient {
 }
 
 export class ChatbotRequest {
-    session_id:  string;
-    message_id: string;
-    message:  string;
-    context:  string[];
-
-    constructor(session_id: string, message_id: string, message: string, context: string[]) {
-        this.session_id = session_id;
-        this.message_id = message_id;
-        this.message = message;
-        this.context = context;
-    }
+    constructor(
+        public session_id: string, 
+        public message_id: string, 
+        public message: string, 
+        public context: string[],
+        public use_google_search: boolean = false) {}
 }
 
 export class ChatbotResponse {
@@ -69,4 +65,6 @@ export class ChatbotResult {
     snippet: string = '';
     url: string = '';
     score: number = 0;
+    favicon: string = '';
+    external: boolean = false;
 }
