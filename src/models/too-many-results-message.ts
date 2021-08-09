@@ -1,5 +1,5 @@
 import { ResultsMessage } from "./results-message";
-import { ChatbotResult } from "../chatbot-client";
+import { ChatbotResult } from "../clients/chatbot-client";
 import * as moment from 'moment';
 
 export class TooManyResultsMessage extends ResultsMessage {

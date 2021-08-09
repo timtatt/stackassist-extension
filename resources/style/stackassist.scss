@@ -40,29 +40,29 @@ html, body {
     margin-bottom: 16px;
 }
 
-.sa-lost-connection {
-    #sa-alert-lost-connection {
-        display: block;
-    }
-}
-
 .sa-alert-wrapper {
+    position: relative;
+
     .sa-alert {
+        top: 0;
+        right: 0;
+        left: 0;
+        position: absolute;
         background-color: #F38170;
         color: #F8F8F8;
         border-radius: 4px;
         font-size: 14px;
         padding: 8px 16px;
-        display: none;
+        line-height: 34px;
+        margin-bottom: 12px;
 
-        &:before {
-            content: "\f06a";
-            font-family: "Font Awesome 5 Free";
-            line-height: 34px;
-            border-radius: 4px;
-            font-weight: bold;
-            margin-right: 8px;
-        } 
+        &.sa-alert-success {
+            background-color: #95C3A9;
+        }
+
+        i.fas:nth-child(1) {
+            margin-right: 4px;
+        }
 
         .sa-alert-message {
             display: inline-block;

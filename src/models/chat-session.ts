@@ -1,13 +1,13 @@
 import { v4 as uuid } from 'uuid';
 import { Message } from './message';
-import { ChatbotRequest } from '../chatbot-client';
+import { ChatbotRequest } from '../clients/chatbot-client';
 
 export class ChatSession {
     session_id: string;
     context: string[];
     messages: any = {};
     chronologicalMessages: string[] = [];
-    useGoogleSearch: boolean = true;
+    useGoogleSearch: boolean = false;
 
     constructor() {
         this.session_id = uuid().toString()

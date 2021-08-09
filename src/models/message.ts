@@ -1,4 +1,4 @@
-import { StackAssistView } from "../webview";
+import { StackAssistView } from "../views/webview";
 import { v4 as uuid } from 'uuid';
 import * as moment from 'moment';
 

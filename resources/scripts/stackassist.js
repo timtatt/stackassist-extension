@@ -8,12 +8,6 @@
         const wrapper = $('#sa-wrapper');
         const context = $('.sa-context');
 
-        $('#sa-button-check-connection').on('click', event => {
-            vscode.postMessage({
-                command: 'checkConnectivity'
-            });
-        });
-
         sendMessageForm.on('submit', event => {
             event.preventDefault();
             event.stopPropagation();
@@ -58,6 +52,10 @@
 
         window.addEventListener('message', event => {
             switch (event.data.command) {
+                case 'newPopup':
+                    const data = event.data;
+                    triggerPopup(data.message, data.icon, data.alertType, data.timeout);
+                    wrapper.removeClass('sa-loading');
                 case 'newMessage':
                     if (event.data.direction == 'received') {
                         wrapper.removeClass('sa-loading');
@@ -73,11 +71,24 @@
                         wrapper.removeClass('sa-lost-connection');
                         messageField.disabled = false;
                         sendMessageForm.find('button').disabled = false;
+                        closePopup();
+                        triggerPopup("Successfully connected", icon = 'fa-check-circle', alertType = 'success', timeout = 3000);
                     } else if (event.data.connected === false && !wrapper.hasClass('sa-lost-connection')) {
                         wrapper.addClass('sa-lost-connection');
                         wrapper.removeClass('sa-loading');
                         messageField.disabled = true;
                         sendMessageForm.find('button').disabled = true;
+                        triggerPopup('Unable to connect to StackAssist server', icon='fa-exclamation-circle', alertType='error', timeout=0, afterMessage=`
+                            <a class="sa-alert-action" id="sa-button-check-connection">
+                                <i class="fas fa-sync"></i>
+                            </a>
+                        `, alert => {
+                            alert.find('#sa-button-check-connection').on('click', _ => {
+                                vscode.postMessage({
+                                    command: 'checkConnectivity'
+                                });
+                            });
+                        });
                     }
                     return;
                 case 'estimatesReceived':
@@ -117,6 +128,30 @@
                 selected_context,
                 suggested_context
             });
+        }
+
+        const triggerPopup = (message, icon = 'fa-exclamation-circle', alertType = 'error', timeout = 0, afterMessage = '', afterCreated = (_)=>{}) => {
+            const alert = $(`
+                <div class="sa-alert sa-alert-${alertType}">
+                    <i class="fas ${icon}"></i>
+                    <div class="sa-alert-message">${message}</div>
+                </div>
+            `);
+                    // 
+            alert.hide();
+            wrapper.find('.sa-alert-wrapper').append(alert);
+            alert.fadeIn(100);
+
+            if (timeout > 0) {
+                setTimeout(() => alert.fadeOut(300, () => alert.remove()), timeout);
+            }
+
+            afterCreated(alert);
+        }
+
+        const closePopup = () => {
+            const alert = wrapper.find('.sa-alert-wrapper .sa-alert');
+            alert.fadeOut(100, () => alert.remove());
         }
 
         const registerMessageEvents = (messageElement) => {

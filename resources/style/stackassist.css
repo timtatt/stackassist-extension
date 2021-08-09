@@ -30,34 +30,35 @@ html, body {
   border-bottom: 1px solid #404040;
   margin-bottom: 16px; }
 
-.sa-lost-connection #sa-alert-lost-connection {
-  display: block; }
-
-.sa-alert-wrapper .sa-alert {
-  background-color: #F38170;
-  color: #F8F8F8;
-  border-radius: 4px;
-  font-size: 14px;
-  padding: 8px 16px;
-  display: none; }
-  .sa-alert-wrapper .sa-alert:before {
-    content: "\f06a";
-    font-family: "Font Awesome 5 Free";
-    line-height: 34px;
-    border-radius: 4px;
-    font-weight: bold;
-    margin-right: 8px; }
-  .sa-alert-wrapper .sa-alert .sa-alert-message {
-    display: inline-block; }
-  .sa-alert-wrapper .sa-alert .sa-alert-action {
-    float: right;
-    line-height: 34px;
+.sa-alert-wrapper {
+  position: relative; }
+  .sa-alert-wrapper .sa-alert {
+    top: 0;
+    right: 0;
+    left: 0;
+    position: absolute;
+    background-color: #F38170;
     color: #F8F8F8;
-    text-decoration: none;
-    transition: transform 0.2s;
-    cursor: pointer; }
-    .sa-alert-wrapper .sa-alert .sa-alert-action:hover {
-      transform: rotate(90deg); }
+    border-radius: 4px;
+    font-size: 14px;
+    padding: 8px 16px;
+    line-height: 34px;
+    margin-bottom: 12px; }
+    .sa-alert-wrapper .sa-alert.sa-alert-success {
+      background-color: #95C3A9; }
+    .sa-alert-wrapper .sa-alert i.fas:nth-child(1) {
+      margin-right: 4px; }
+    .sa-alert-wrapper .sa-alert .sa-alert-message {
+      display: inline-block; }
+    .sa-alert-wrapper .sa-alert .sa-alert-action {
+      float: right;
+      line-height: 34px;
+      color: #F8F8F8;
+      text-decoration: none;
+      transition: transform 0.2s;
+      cursor: pointer; }
+      .sa-alert-wrapper .sa-alert .sa-alert-action:hover {
+        transform: rotate(90deg); }
 
 .sa-conversation {
   flex: 1 1 auto;

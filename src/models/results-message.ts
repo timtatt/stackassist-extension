@@ -1,6 +1,6 @@
-import { StackAssistView } from "../webview";
+import { StackAssistView } from "../views/webview";
 import { Message, MessageDirection } from "./message";
-import { ChatbotResult } from "../chatbot-client";
+import { ChatbotResult } from "../clients/chatbot-client";
 import * as moment from 'moment';
 
 export class ResultsMessage extends Message {

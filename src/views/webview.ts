@@ -1,20 +1,23 @@
 import * as vscode from 'vscode';
-import { ChatbotClient } from './chatbot-client';
-import { Message, MessageDirection } from './models/message';
-import { ResultsMessage } from './models/results-message';
-import { TooManyResultsMessage } from './models/too-many-results-message';
-import { ChatSession } from './models/chat-session';
+import { ChatbotClient } from '../clients/chatbot-client';
+import { Message, MessageDirection } from '../models/message';
+import { ResultsMessage } from '../models/results-message';
+import { TooManyResultsMessage } from '../models/too-many-results-message';
+import { ChatSession } from '../models/chat-session';
+import { ChatbotService } from '../services/chatbot-service';
 
 export class StackAssistView {
 	private extensionUri:  vscode.Uri;
 	private chatbotClient:  ChatbotClient;
 	private panel:  vscode.WebviewPanel;
 	private session:  ChatSession = new ChatSession();
+	private chatbotService: ChatbotService;
 
 	constructor(extensionUri: vscode.Uri, panel: vscode.WebviewPanel, chatbotClient: ChatbotClient) {
 		this.extensionUri = extensionUri;
 		this.panel = panel;
 		this.chatbotClient = chatbotClient;
+		this.chatbotService = new ChatbotService(chatbotClient);
 
 		panel.webview.onDidReceiveMessage(event => {
 			switch (event.command) {
@@ -26,14 +29,14 @@ export class StackAssistView {
 						direction: 'sent',
 						renderedMessage: message.render(this)
 					})
-					this.getChatbotMessage(message, receivedMessage => {
+					this.chatbotService.getChatbotMessage(this.session, message, receivedMessage => {
 						panel.webview.postMessage({
 							command: 'newMessage',
 							direction: 'received',
 							renderedContext: this.renderContext(),
 							renderedMessage: receivedMessage.render(this)
 						})
-					});
+					}, () => this.newPopup('An unexpected error occured. Please try again or contact plugin developer'));
 					return;
 				case 'changeScope':
 					this.session.useGoogleSearch = event.useGoogleSearch;
@@ -83,14 +86,14 @@ export class StackAssistView {
 	}
 
 	private updateSessionParameters() {
-		this.getChatbotMessage(null, receivedMessage => {
+		this.chatbotService.getChatbotMessage(this.session, null, receivedMessage => {
 			this.panel.webview.postMessage({
 				command: 'newMessage',
 				direction: 'received',
 				renderedContext: this.renderContext(),
 				renderedMessage: receivedMessage.render(this)
 			})
-		});
+		}, () => this.newPopup('An unexpected error occured. Please try again or contact plugin developer'));
 	}
 
 	private checkConnectivity() {
@@ -105,44 +108,22 @@ export class StackAssistView {
 		this.session = new ChatSession();
 	}
 
-	private getChatbotMessage(message: Message | null, callback: (message: Message) => void) {
-		this.chatbotClient.interact(this.session.createChatbotRequest(message), chatbotResponse => {
-			this.session.context = chatbotResponse.context
-			var message;
-			switch (chatbotResponse.response_type) {
-				case 'RESULTS':
-					console.log(chatbotResponse.results)
-					message = new ResultsMessage(
-						chatbotResponse.text, 
-						chatbotResponse.timestamp, 
-						chatbotResponse.message_id,
-						chatbotResponse.results);
-					break;
-				case 'TOO_MANY_RESULTS':
-					message = new TooManyResultsMessage(
-						chatbotResponse.text, 
-						chatbotResponse.timestamp, 
-						chatbotResponse.message_id,
-						chatbotResponse.results, 
-						chatbotResponse.suggested_context);
-					break;
-				default:
-					message = new Message(
-						chatbotResponse.text,
-						MessageDirection.RECEIVED,
-						chatbotResponse.timestamp,
-						chatbotResponse.message_id);
-			}
-			callback(message)
-		})
-	}
-
 	public getResource(type: string, filename: string) {
 		return this.panel.webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'resources/' + type, filename));
 	}
 
 	public getSession() {
 		return this.session;
+	}
+
+	private newPopup(message: string, icon: string = 'fa-exclamation-circle', alertType = 'error', timeout: number = 3000) {
+		this.panel.webview.postMessage({
+			command: 'newPopup',
+			message,
+			icon,
+			alertType,
+			timeout,
+		});
 	}
 
 	private render() {
@@ -160,14 +141,7 @@ export class StackAssistView {
 							<div class="sa-toolbar">
 								<button id="sa-button-reset-chat"><i class="fas fa-trash"></i>Reset Chat</button>
 							</div>
-							<div class="sa-alert-wrapper">
-								<div id="sa-alert-lost-connection" class="sa-alert">
-									<div class="sa-alert-message">Unable to connect to StackAssist server</div>
-									<a class="sa-alert-action" id="sa-button-check-connection">
-										<i class="fas fa-sync"></i>
-									</a>
-								</div>
-							</div>
+							<div class="sa-alert-wrapper"></div>
 							<div class="sa-conversation">
 								<div class="sa-typing">
 									<div class="sa-ellipsis">

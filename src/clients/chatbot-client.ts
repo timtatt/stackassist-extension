@@ -17,11 +17,12 @@ export class ChatbotClient {
         .catch(_ => callback(false))
     }
 
-    public interact(request: ChatbotRequest, callback: (chatbotResponse: ChatbotResponse) => void) {
+    public interact(request: ChatbotRequest, callback: (chatbotResponse: ChatbotResponse) => void, errorCallback: () => void) {
         axios.post(this.baseUri + '/chatbot/interact', request, {
             headers: this.getHeaders()
         })
-        .then(response => callback(Object.assign(new ChatbotResponse(), response.data.response)));
+        .then(response => callback(Object.assign(new ChatbotResponse(), response.data.response)))
+        .catch(() => errorCallback());
     }
 
     public estimateContextCounts(context: string[], suggestedContext: string[], callback: (estimateResponse: ChatbotEstimateResponse) => void) {
