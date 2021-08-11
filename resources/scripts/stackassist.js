@@ -48,7 +48,7 @@
                 command: 'removeContext',
                 context: [contextItem]
             });
-        })
+        });
 
         window.addEventListener('message', event => {
             switch (event.data.command) {

@@ -1,3 +1,4 @@
+@charset "UTF-8";
 @keyframes typing {
   0% {
     transform: translateY(0px);
@@ -14,7 +15,7 @@
 
 html, body {
   height: 100%;
-  background-color: #212121; }
+  background-color: var(--vscode-editor-background); }
 
 .sa-wrapper {
   display: flex;
@@ -27,11 +28,12 @@ html, body {
 .sa-toolbar {
   flex: 0 0 auto;
   padding: 16px 0;
-  border-bottom: 1px solid #404040;
+  border-bottom: 1px solid var(--vscode-button-secondaryBackground);
   margin-bottom: 16px; }
 
 .sa-alert-wrapper {
-  position: relative; }
+  position: relative;
+  z-index: 100; }
   .sa-alert-wrapper .sa-alert {
     top: 0;
     right: 0;
@@ -39,6 +41,7 @@ html, body {
     position: absolute;
     background-color: #F38170;
     color: #F8F8F8;
+    box-shadow: 0px ​2px 3px var(--vscode-widget-shadow);
     border-radius: 4px;
     font-size: 14px;
     padding: 8px 16px;
@@ -101,22 +104,28 @@ html, body {
       .sa-conversation .sa-chat .sa-message-wrapper.sa-message-received {
         text-align: left; }
         .sa-conversation .sa-chat .sa-message-wrapper.sa-message-received .sa-message-bubble {
-          background-color: #1666BA; }
+          background-color: var(--vscode-button-hoverBackground); }
       .sa-conversation .sa-chat .sa-message-wrapper.sa-message-sent {
         text-align: right; }
         .sa-conversation .sa-chat .sa-message-wrapper.sa-message-sent .sa-message-bubble {
-          background-color: #358CE7; }
+          background-color: var(--vscode-button-background); }
       .sa-conversation .sa-chat .sa-message-wrapper .sa-message {
         display: inline-block;
         width: 80%; }
+        @media screen and (max-width: 600px) {
+          .sa-conversation .sa-chat .sa-message-wrapper .sa-message {
+            width: 100%; } }
         .sa-conversation .sa-chat .sa-message-wrapper .sa-message .sa-message-bubble {
           border-radius: 4px;
-          color: #F5F5F5;
+          color: var(--vscode-button-foreground);
           padding: 8px 16px;
           display: inline-block;
           font-size: 14px;
           max-width: 75%;
           box-sizing: border-box; }
+          @media screen and (max-width: 500px) {
+            .sa-conversation .sa-chat .sa-message-wrapper .sa-message .sa-message-bubble {
+              max-width: 90%; } }
           .sa-conversation .sa-chat .sa-message-wrapper .sa-message .sa-message-bubble .sa-message-sender {
             font-weight: bold;
             font-size: 12px; }
@@ -127,6 +136,9 @@ html, body {
             user-select: none; }
         .sa-conversation .sa-chat .sa-message-wrapper .sa-message .sa-additional-context {
           max-width: 75%; }
+          @media screen and (max-width: 500px) {
+            .sa-conversation .sa-chat .sa-message-wrapper .sa-message .sa-additional-context {
+              max-width: 90%; } }
           .sa-conversation .sa-chat .sa-message-wrapper .sa-message .sa-additional-context .sa-context-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -140,8 +152,8 @@ html, body {
               .sa-conversation .sa-chat .sa-message-wrapper .sa-message .sa-additional-context .sa-context-grid .sa-context-option .sa-context-option-inner {
                 display: block;
                 padding: 12px;
-                border: 1px solid #363636;
-                color: #BCBCBC;
+                border: 1px solid var(--vscode-dropdown-border);
+                color: var(--vscode-foreground);
                 width: 100%;
                 border-radius: 4px;
                 cursor: pointer;
@@ -165,19 +177,18 @@ html, body {
                   width: 16px;
                   height: 16px;
                   vertical-align: top;
-                  border: 2px solid #BCBCBC;
+                  border: 2px solid var(--vscode-foreground);
                   border-radius: 4px;
                   box-sizing: border-box;
                   display: inline-block;
                   margin-right: 8px;
                   transition: border-color 0.1s, background-color 0.1s; }
               .sa-conversation .sa-chat .sa-message-wrapper .sa-message .sa-additional-context .sa-context-grid .sa-context-option input:checked + .sa-context-option-inner {
-                background-color: #5e768e;
-                border-color: #556b82;
-                color: #F8F8F8; }
+                background-color: var(--vscode-dropdown-border);
+                color: var(--vscode-foreground); }
                 .sa-conversation .sa-chat .sa-message-wrapper .sa-message .sa-additional-context .sa-context-grid .sa-context-option input:checked + .sa-context-option-inner:before {
-                  border-color: #F8F8F8;
-                  background-color: #F8F8F8; }
+                  border-color: var(--vscode-foreground);
+                  background-color: var(--vscode-foreground); }
                 .sa-conversation .sa-chat .sa-message-wrapper .sa-message .sa-additional-context .sa-context-grid .sa-context-option input:checked + .sa-context-option-inner .counter {
                   color: #E7E7E7; }
               .sa-conversation .sa-chat .sa-message-wrapper .sa-message .sa-additional-context .sa-context-grid .sa-context-option input:disabled + .sa-context-option-inner {
@@ -193,8 +204,11 @@ html, body {
             transition: max-width 0.2s; }
             .sa-conversation .sa-chat .sa-message-wrapper .sa-message .sa-results .sa-result.expanded {
               max-width: 100%; }
-              .sa-conversation .sa-chat .sa-message-wrapper .sa-message .sa-results .sa-result.expanded .sa-result-preview .sa-result-navigate i.fas:before {
-                content: "\f078"; }
+              .sa-conversation .sa-chat .sa-message-wrapper .sa-message .sa-results .sa-result.expanded .sa-result-preview {
+                border-bottom-left-radius: 0;
+                border-bottom-right-radius: 0; }
+                .sa-conversation .sa-chat .sa-message-wrapper .sa-message .sa-results .sa-result.expanded .sa-result-preview .sa-result-navigate i.fas:before {
+                  content: "\f078"; }
             .sa-conversation .sa-chat .sa-message-wrapper .sa-message .sa-results .sa-result .sa-result-preview {
               padding: 12px;
               cursor: pointer;
@@ -204,9 +218,10 @@ html, body {
               border-radius: 4px;
               display: flex;
               transition: background-color 0.2s;
-              background-color: #343434; }
+              background-color: var(--vscode-button-secondaryBackground);
+              color: var(--vscode-button-secondaryForeground); }
               .sa-conversation .sa-chat .sa-message-wrapper .sa-message .sa-results .sa-result .sa-result-preview:hover {
-                background-color: #383838; }
+                background-color: var(--vscode-button-secondaryHoverBackground); }
               .sa-conversation .sa-chat .sa-message-wrapper .sa-message .sa-results .sa-result .sa-result-preview .sa-result-thumbnail {
                 flex: 0 0 auto;
                 width: 30px;
@@ -238,35 +253,44 @@ html, body {
                   margin-right: 0; }
             .sa-conversation .sa-chat .sa-message-wrapper .sa-message .sa-results .sa-result .sa-result-details {
               padding: 12px;
-              border: 2px solid #343434;
+              border: 2px solid var(--vscode-button-secondaryBackground);
               border-bottom-left-radius: 4px;
               border-bottom-right-radius: 4px;
               overflow-wrap: break-word;
               font-size: 14px;
-              display: none; }
+              display: none;
+              color: var(--vscode-foreground); }
               .sa-conversation .sa-chat .sa-message-wrapper .sa-message .sa-results .sa-result .sa-result-details .sa-result-answer p {
                 margin-top: 0;
                 line-height: 22.5px; }
+              .sa-conversation .sa-chat .sa-message-wrapper .sa-message .sa-results .sa-result .sa-result-details .sa-result-answer a {
+                color: var(--vscode-textLink-foreground); }
+                .sa-conversation .sa-chat .sa-message-wrapper .sa-message .sa-results .sa-result .sa-result-details .sa-result-answer a:active {
+                  color: var(--vscode-textLink-activeForeground); }
               .sa-conversation .sa-chat .sa-message-wrapper .sa-message .sa-results .sa-result .sa-result-details .sa-result-answer pre {
-                background-color: #50575f;
+                background-color: var(--vscode-textCodeBlock-background);
                 padding: 12px;
                 border-radius: 4px; }
                 .sa-conversation .sa-chat .sa-message-wrapper .sa-message .sa-results .sa-result .sa-result-details .sa-result-answer pre code {
+                  background-color: transparent;
                   padding: 0;
                   border-radius: 0px; }
               .sa-conversation .sa-chat .sa-message-wrapper .sa-message .sa-results .sa-result .sa-result-details .sa-result-answer code {
-                background-color: #50575f;
-                color: #F8F8F8;
+                background-color: var(--vscode-textCodeBlock-background);
+                color: var(--vscode-textPreformat-foreground);
                 padding: 2px 4px;
                 font-size: 12px;
-                border-radius: 2px; }
+                border-radius: 2px;
+                white-space: break-spaces; }
               .sa-conversation .sa-chat .sa-message-wrapper .sa-message .sa-results .sa-result .sa-result-details .sa-result-answer ol, .sa-conversation .sa-chat .sa-message-wrapper .sa-message .sa-results .sa-result .sa-result-details .sa-result-answer ul {
                 padding-left: 30px; }
               .sa-conversation .sa-chat .sa-message-wrapper .sa-message .sa-results .sa-result .sa-result-details .sa-result-answer blockquote {
                 margin-left: 0;
                 margin-right: 0;
                 padding: 8px;
-                border-radius: 4px; }
+                border-radius: 4px;
+                background-color: var(--vscode-textBlockQuote-background);
+                color: var(--vscode-foreground); }
 
 .sa-footer {
   flex: 0 0 auto; }
@@ -280,8 +304,8 @@ html, body {
       margin: 0 8px 0 0;
       padding: 8px;
       border-radius: 4px;
-      border: 1px solid #464646;
-      color: #DEDEDE;
+      border: 1px solid var(--vscode-foreground);
+      color: var(--vscode-foreground);
       position: relative;
       cursor: pointer; }
       .sa-footer .sa-context .sa-context-item:before {
@@ -317,10 +341,10 @@ html, body {
       border-top-left-radius: 4px;
       border-bottom-left-radius: 4px;
       outline: none;
-      color: #F9F9F9;
-      border: 1px solid #404040;
+      color: var(--vscode-input-foreground);
+      border: 1px solid var(--vscode-button-background);
       border-right: none;
-      background-color: #343434; }
+      background-color: var(--vscode-input-background); }
       .sa-footer #sa-form-send-message #sa-field-message:disabled {
         cursor: not-allowed; }
     .sa-footer #sa-form-send-message button {
@@ -329,10 +353,10 @@ html, body {
       border-bottom-left-radius: 0; }
 
 button, a.sa-button {
-  color: #FFFFFF;
+  color: var(--vscode-button-foreground);
+  background-color: var(--vscode-button-background);
   display: inline-block;
-  background-color: #404040;
-  border: 1px solid #404040;
+  border: 0;
   padding: 12px 18px;
   border-radius: 4px;
   outline: none;
@@ -352,4 +376,4 @@ button, a.sa-button {
   button:disabled, a.sa-button:disabled {
     cursor: not-allowed; }
   button:hover:not(:disabled), a.sa-button:hover:not(:disabled) {
-    background-color: #464646; }
+    background-color: var(--vscode-button-hoverBackground); }

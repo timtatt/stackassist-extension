@@ -19,7 +19,7 @@
 
 html, body {
     height: 100%;
-    background-color: #212121;
+    background-color: var(--vscode-editor-background);
 }
 
 .sa-wrapper {
@@ -36,12 +36,13 @@ html, body {
 .sa-toolbar {
     flex: 0 0 auto;
     padding: 16px 0;
-    border-bottom: 1px solid #404040;
+    border-bottom: 1px solid var(--vscode-button-secondaryBackground);
     margin-bottom: 16px;
 }
 
 .sa-alert-wrapper {
     position: relative;
+    z-index:100;
 
     .sa-alert {
         top: 0;
@@ -50,6 +51,7 @@ html, body {
         position: absolute;
         background-color: #F38170;
         color: #F8F8F8;
+        box-shadow: 0px ​2px 3px var(--vscode-widget-shadow);
         border-radius: 4px;
         font-size: 14px;
         padding: 8px 16px;
@@ -141,7 +143,7 @@ html, body {
                 text-align: left;
                 
                 .sa-message-bubble {
-                    background-color: #1666BA;
+                    background-color: var(--vscode-button-hoverBackground);
                 }
             }
 
@@ -149,7 +151,7 @@ html, body {
                 text-align: right;
 
                 .sa-message-bubble {
-                    background-color: #358CE7;
+                    background-color: var(--vscode-button-background);
                 }
             }
 
@@ -157,14 +159,22 @@ html, body {
                 display: inline-block;
                 width: 80%;
 
+                @media screen and (max-width: 600px) {
+                    width: 100%;
+                }
+
                 .sa-message-bubble {
                     border-radius: 4px;
-                    color: #F5F5F5;
+                    color: var(--vscode-button-foreground);
                     padding: 8px 16px;
                     display: inline-block;
                     font-size: 14px;
                     max-width: 75%;
                     box-sizing: border-box;
+
+                    @media screen and (max-width: 500px) {
+                        max-width: 90%;
+                    }
 
                     .sa-message-sender {
                         font-weight: bold;
@@ -181,6 +191,10 @@ html, body {
 
                 .sa-additional-context {
                     max-width: 75%;
+
+                    @media screen and (max-width: 500px) {
+                        max-width: 90%;
+                    }
 
                     .sa-context-grid {
                         display: grid;
@@ -199,8 +213,8 @@ html, body {
                             .sa-context-option-inner {
                                 display: block;
                                 padding: 12px;
-                                border: 1px solid #363636;
-                                color: #BCBCBC;
+                                border: 1px solid var(--vscode-dropdown-border);
+                                color: var(--vscode-foreground);
                                 width: 100%;
                                 border-radius: 4px;
                                 cursor: pointer;
@@ -234,7 +248,7 @@ html, body {
                                     width: 16px;
                                     height: 16px;
                                     vertical-align: top;
-                                    border: 2px solid #BCBCBC;
+                                    border: 2px solid var(--vscode-foreground);
                                     border-radius: 4px;
                                     box-sizing: border-box;
                                     display: inline-block;
@@ -244,13 +258,12 @@ html, body {
                             }
 
                             input:checked + .sa-context-option-inner {
-                                background-color: #5e768e;
-                                border-color: #556b82;
-                                color: #F8F8F8;
+                                background-color: var(--vscode-dropdown-border);
+                                color: var(--vscode-foreground);
 
                                 &:before {
-                                    border-color: #F8F8F8;
-                                    background-color: #F8F8F8;
+                                    border-color: var(--vscode-foreground);
+                                    background-color: var(--vscode-foreground);
                                 }
 
                                 .counter {
@@ -280,8 +293,13 @@ html, body {
                         &.expanded {
                             max-width: 100%;
 
-                            .sa-result-preview .sa-result-navigate i.fas:before {
-                                content: "\f078"
+                            .sa-result-preview {
+                                border-bottom-left-radius: 0;
+                                border-bottom-right-radius: 0;
+                                
+                                .sa-result-navigate i.fas:before {
+                                    content: "\f078"
+                                }
                             }
                         }
                         
@@ -294,10 +312,11 @@ html, body {
                             border-radius: 4px;
                             display: flex;
                             transition: background-color 0.2s;
-                            background-color: #343434;
+                            background-color: var(--vscode-button-secondaryBackground);
+                            color: var(--vscode-button-secondaryForeground);
 
                             &:hover {
-                                background-color: #383838;
+                                background-color: var(--vscode-button-secondaryHoverBackground);
                             }
 
                             .sa-result-thumbnail {
@@ -347,12 +366,13 @@ html, body {
 
                         .sa-result-details {
                             padding: 12px;
-                            border: 2px solid #343434;
+                            border: 2px solid var(--vscode-button-secondaryBackground);
                             border-bottom-left-radius: 4px;
                             border-bottom-right-radius: 4px;
                             overflow-wrap: break-word;
                             font-size: 14px;
                             display: none;
+                            color: var(--vscode-foreground);
 
                             .sa-result-answer {
                                 p {
@@ -360,23 +380,33 @@ html, body {
                                     line-height: 22.5px;
                                 }
 
+                                a {
+                                    color: var(--vscode-textLink-foreground);
+
+                                    &:active {
+                                        color: var(--vscode-textLink-activeForeground);
+                                    }
+                                }
+
                                 pre {
-                                    background-color: #50575f;
+                                    background-color: var(--vscode-textCodeBlock-background);
                                     padding: 12px;
                                     border-radius: 4px;
 
                                     code {
+                                        background-color: transparent;
                                         padding: 0;
                                         border-radius: 0px;
                                     }
                                 }
 
                                 code {
-                                    background-color: #50575f;
-                                    color: #F8F8F8;
+                                    background-color: var(--vscode-textCodeBlock-background);
+                                    color: var(--vscode-textPreformat-foreground);
                                     padding: 2px 4px;
                                     font-size: 12px;
                                     border-radius: 2px;
+                                    white-space: break-spaces;
                                 }
 
                                 ol, ul {
@@ -388,6 +418,8 @@ html, body {
                                     margin-right: 0;
                                     padding: 8px;
                                     border-radius: 4px;
+                                    background-color: var(--vscode-textBlockQuote-background);
+                                    color: var(--vscode-foreground);
                                 }
                             }
                         }
@@ -412,8 +444,8 @@ html, body {
             margin: 0 8px 0 0;
             padding: 8px;
             border-radius: 4px;
-            border: 1px solid #464646;
-            color: #DEDEDE;
+            border: 1px solid var(--vscode-foreground);
+            color: var(--vscode-foreground);
             position: relative;
             cursor: pointer;
 
@@ -457,10 +489,10 @@ html, body {
             border-top-left-radius: 4px;
             border-bottom-left-radius: 4px;
             outline: none;
-            color: #F9F9F9;
-            border: 1px solid #404040;
+            color: var(--vscode-input-foreground);
+            border: 1px solid var(--vscode-button-background);
             border-right: none;
-            background-color: #343434;
+            background-color: var(--vscode-input-background);
 
             &:disabled {
                 cursor: not-allowed;
@@ -477,10 +509,10 @@ html, body {
 }
 
 button, a.sa-button {
-    color: #FFFFFF;
+    color: var(--vscode-button-foreground);
+    background-color: var(--vscode-button-background);
     display:inline-block;
-    background-color: #404040;
-    border: 1px solid #404040;
+    border: 0;
     padding: 12px 18px;
     border-radius: 4px;
     outline: none;
@@ -511,6 +543,6 @@ button, a.sa-button {
     }
 
     &:hover:not(:disabled) {
-        background-color: #464646;
+        background-color: var(--vscode-button-hoverBackground);
     }
 }
