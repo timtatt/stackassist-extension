@@ -7,7 +7,7 @@ import { ChatbotClient } from './clients/chatbot-client';
 
 export function activate(context: vscode.ExtensionContext) {
 	const chatbotClient = new ChatbotClient();
-	const view = StackAssistView.createPanel(context, chatbotClient);
+	// StackAssistView.createPanel(context, chatbotClient);
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('stackassist.start', () => {

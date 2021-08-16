@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 export class ChatbotClient {
-    private baseUri = "http://localhost:5000";
+    private baseUri = "http://stackassist.timtattersall.com.au:5000";
 
     private getHeaders() {
         return {
