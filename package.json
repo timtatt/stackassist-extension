@@ -2,7 +2,7 @@
   "name": "stackassist",
   "displayName": "StackAssist",
   "description": "A tool to help developers find information online",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "publisher": "timtatt",
   "engines": {
     "vscode": "^1.58.0"
