@@ -22,3 +22,7 @@
 *Steps*
 - Open a terminal or command line window, navigate to the directory of the download
 - `code --install-extension stackassist-x.x.x.vsix`
+
+
+## Use extension
+To open a StackAssist chat window `Cmd+Shift+P` and type `Start StackAssist`
